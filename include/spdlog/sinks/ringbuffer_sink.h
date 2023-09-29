@@ -39,18 +39,19 @@ public:
         return ret;
     }
 
-    std::vector<std::string> last_formatted(size_t lim = 0)
+    std::vector<std::tuple<level::level_enum, std::string>> last_formatted(size_t lim = 0)
     {
         std::lock_guard<Mutex> lock(base_sink<Mutex>::mutex_);
         auto items_available = q_.size();
         auto n_items = lim > 0 ? (std::min)(lim, items_available) : items_available;
-        std::vector<std::string> ret;
+        std::vector<std::tuple<level::level_enum, std::string>> ret;
         ret.reserve(n_items);
         for (size_t i = (items_available - n_items); i < items_available; i++)
         {
             memory_buf_t formatted;
-            base_sink<Mutex>::formatter_->format(q_.at(i), formatted);
-            ret.push_back(SPDLOG_BUF_TO_STRING(formatted));
+            auto &item = q_.at(i);
+            base_sink<Mutex>::formatter_->format(item, formatted);
+            ret.emplace_back(item.level, SPDLOG_BUF_TO_STRING(formatted));
         }
         return ret;
     }
